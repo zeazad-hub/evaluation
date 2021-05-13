@@ -13,9 +13,6 @@ class App extends React.Component {
   }
 
   render() {
-    /* useEffect(() => {
-      document.getElementById('table').addFile(document.getElementById('pivot').files[0]);
-    }, []); */
 
     const handleClick = () => {this.setState({FileInserted: true})};
 
