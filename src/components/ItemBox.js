@@ -1,34 +1,125 @@
 import React from 'react'
+import Type from './Type'
+import Container from './Container';
 
-function ItemBox(props) {
-    const dropUpon = e => {
-        e.preventDefault();
-        
-        const item_id = e.dataTransfer.getData("item_id");
-        const item_type = e.dataTransfer.getData("item_type");
-        const item = document.getElementById(item_id);
+class ItemBox extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            Items: [],
+            shouldRem: true,
+            dataRead: false
+        }
 
-        if(props.type === item_type) {
-            item.style.display = "block";
-            e.target.appendChild(item);
+        this.setItems = this.setItems.bind(this);
+        this.readItems();
+        this.addItem = this.addItem.bind(this);
+        this.removeItem = this.removeItem.bind(this);
+    }
+
+    checkHeader(elem) {
+        for(let i = 0; i < elem.length; i++) {
+            if((!(isNaN(parseInt(elem[i])))) || (elem[i] === '')) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    setItems(result) {
+        if(this.props.type === Type.Country) {
+            var ind = 0;
+            for(let i = 0; i < result.data.length; i++) {
+                if(this.checkHeader(result.data[i])) {
+                    ind = i;
+                    break;
+                }
+            }
+            const countryNames = result.data[ind].slice(1);
+
+            this.setState({Items:  countryNames});
+        }
+        else {
+            var readStart = result.data.length;
+            var readEnd = result.data.length;
+            for(let i = 0; i < result.data.length; i++) {
+                if(this.checkHeader(result.data[i])) {
+                    readStart = i+1;
+                }
+
+                //Break if the end of the rows for one of the tables are found
+                if(result.data[i][0] === '') {
+                    readEnd = i;
+                    break;
+                }
+            }
+
+            const prodNames = result.data.slice(readStart, readEnd).map ((elem) => {
+                return elem[0];
+            });
+
+            this.setState({Items: prodNames});
+            
         }
     }
 
-    const dragOver = e => {
-        e.preventDefault();
+    readItems() {
+        const Parser = require('papaparse');
+        if(this.props.dataAvail) {
+            Parser.parse(this.props.file.files[0], {
+                skipEmptyLines: true,
+                complete: this.setItems
+            })
+        }
     }
 
-    return (
-        <div
-            id={props.id}
-            className={props.className}
-            type={props.type}
-            onDrop={dropUpon}
-            onDragOver={dragOver}
-        >
-            { props.children }
-        </div>
-    )
+    addItem(item) {
+        var list = this.state.Items.slice();
+
+        // Check if item is already in the itemBox, if not then add the item
+        // if the item is included then set dontRem to true so we do not do anything
+        // in removeItem this time
+        if(!(list.includes(item.id))) {
+            list.push(item.id);
+        }
+        else {
+            this.setState({shouldRem: false});
+        }
+
+        this.setState({Items: list});
+    }
+
+    removeItem(item) {
+        if(this.state.shouldRem) {
+            var list = this.state.Items.slice();
+            var ind = list.indexOf(item.id);
+            list.splice(ind, 1);
+            this.setState({Items: list});
+        }
+        else {
+            this.setState({shouldRem: true});
+        }
+    }
+
+    render() {
+        if((!this.state.dataRead) && this.props.dataAvail) {
+            this.readItems();
+            this.setState({dataRead: true})
+        }
+    
+        return (
+            <Container
+                id={this.props.id}
+                className={this.props.className}
+                type={this.props.type}
+                dropFunc={this.addItem}
+                dragFunc={this.removeItem}
+                items={this.state.Items}
+            >
+                {this.props.children}
+            </Container>
+        );
+    }
 }
 
 export default ItemBox;
