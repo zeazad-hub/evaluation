@@ -8,7 +8,9 @@ class Table extends React.Component {
 
         this.state = {
             costs: [],
-            profits: []
+            profits: [],
+            third: '',
+            fourth: ''
         }
 
         this.setArr = this.setArr.bind(this);
@@ -25,10 +27,24 @@ class Table extends React.Component {
     setArr(result) {
         const data = result.data;
         const endP = this.getEndP(data);
+        this.findHeading(data);
         this.setState({ 
             costs: this.changeInd(data.slice(endP[0], endP[1]), data[endP[0]-1]),
             profits: this.changeInd(data.slice(endP[2]), data[endP[2]-1])
         });
+    }
+
+    findHeading(data) {
+        const arr = data.reduce((result, elem) => {
+            if((elem[0] !== '') && (elem[elem.length-1] === '')) {
+                result.push(elem[0]);
+            }
+
+            return result;
+        });
+
+        this.setState({ third: arr[0],
+                        fourth: arr[arr.length - 1]});
     }
 
     //Takes in an arr and the index of the header
@@ -101,8 +117,8 @@ class Table extends React.Component {
                     <tr>
                         <th>Product</th>
                         <th>Country</th>
-                        <th>Total Cost</th>
-                        <th>Total Profit</th>
+                        <th>{this.state.third}</th>
+                        <th>{this.state.fourth}</th>
                     </tr>
                     {this.renderCandP()}
                 </tbody>
